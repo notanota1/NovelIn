@@ -23,7 +23,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String COL_NOVEL_TITLE = "TITLE";
 
     public DatabaseHelper(Context context) {
-        super(context, DATABASE_NAME, null, 2); // Increased version for new table
+        super(context, DATABASE_NAME, null, 2);
     }
 
     @Override
@@ -57,13 +57,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     public boolean saveNovel(String username, String title) {
-        if (isNovelSaved(username, title)) return true;
+        if (isNovelSaved(username, title)) return false;
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         contentValues.put(COL_SAVED_USERNAME, username);
         contentValues.put(COL_NOVEL_TITLE, title);
         long result = db.insert(TABLE_SAVED, null, contentValues);
         return result != -1;
+    }
+
+    public boolean deleteSavedNovel(String username, String title) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        return db.delete(TABLE_SAVED, COL_SAVED_USERNAME + "=? AND " + COL_NOVEL_TITLE + "=?", new String[]{username, title}) > 0;
     }
 
     public boolean isNovelSaved(String username, String title) {

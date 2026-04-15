@@ -10,15 +10,20 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
 public class ReadingFragment extends Fragment {
 
-    private static final String ARG_CONTENT = "content";
-    private String content;
+    private static final String ARG_FILE_NAME = "file_name";
+    private String fileName;
 
-    public static ReadingFragment newInstance(String content) {
+    public static ReadingFragment newInstance(String fileName) {
         ReadingFragment fragment = new ReadingFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_CONTENT, content);
+        args.putString(ARG_FILE_NAME, fileName);
         fragment.setArguments(args);
         return fragment;
     }
@@ -27,7 +32,7 @@ public class ReadingFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            content = getArguments().getString(ARG_CONTENT);
+            fileName = getArguments().getString(ARG_FILE_NAME);
         }
     }
 
@@ -36,9 +41,29 @@ public class ReadingFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_reading, container, false);
         TextView tvContent = view.findViewById(R.id.tvReadingContent);
-        if (content != null) {
-            tvContent.setText(content);
+
+        if (fileName != null) {
+            tvContent.setText(loadAssetFile(fileName));
         }
+
         return view;
+    }
+
+    private String loadAssetFile(String name) {
+        StringBuilder sb = new StringBuilder();
+        try {
+            InputStream is = getContext().getAssets().open(name);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line).append("\n");
+            }
+            reader.close();
+            is.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "Error loading content: " + e.getMessage();
+        }
+        return sb.toString();
     }
 }

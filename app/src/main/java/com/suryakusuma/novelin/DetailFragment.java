@@ -14,6 +14,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 public class DetailFragment extends Fragment {
 
@@ -21,6 +23,8 @@ public class DetailFragment extends Fragment {
     private Novel novel;
     private DatabaseHelper db;
     private String username;
+    private Button btnSave;
+    private boolean isSaved;
 
     public static DetailFragment newInstance(Novel novel) {
         DetailFragment fragment = new DetailFragment();
@@ -50,8 +54,8 @@ public class DetailFragment extends Fragment {
         TextView tvTitle = view.findViewById(R.id.tvDetailTitle);
         TextView tvAuthor = view.findViewById(R.id.tvDetailAuthor);
         TextView tvDesc = view.findViewById(R.id.tvDetailDesc);
-        Button btnRead = view.findViewById(R.id.btnRead);
-        Button btnSave = view.findViewById(R.id.btnSave);
+        btnSave = view.findViewById(R.id.btnSave);
+        RecyclerView rvChapters = view.findViewById(R.id.rvChapters);
 
         if (novel != null) {
             ivCover.setImageResource(novel.getCoverResourceId());
@@ -59,24 +63,47 @@ public class DetailFragment extends Fragment {
             tvAuthor.setText("Author: " + novel.getAuthor());
             tvDesc.setText(novel.getDescription());
 
+            updateSaveButton();
+
             btnSave.setOnClickListener(v -> {
-                boolean result = db.saveNovel(username, novel.getTitle());
-                if (result) {
-                    Toast.makeText(getContext(), "Novel saved to Library!", Toast.LENGTH_SHORT).show();
+                if (isSaved) {
+                    if (db.deleteSavedNovel(username, novel.getTitle())) {
+                        Toast.makeText(getContext(), "Removed from Library", Toast.LENGTH_SHORT).show();
+                        isSaved = false;
+                        updateSaveButton();
+                    }
                 } else {
-                    Toast.makeText(getContext(), "Error saving novel", Toast.LENGTH_SHORT).show();
+                    if (db.saveNovel(username, novel.getTitle())) {
+                        Toast.makeText(getContext(), "Saved to Library", Toast.LENGTH_SHORT).show();
+                        isSaved = true;
+                        updateSaveButton();
+                    }
                 }
             });
 
-            btnRead.setOnClickListener(v -> {
-                ReadingFragment readingFragment = ReadingFragment.newInstance(novel.getContent());
+            // Set up Chapters RecyclerView
+            rvChapters.setLayoutManager(new LinearLayoutManager(getContext()));
+            ChapterAdapter chapterAdapter = new ChapterAdapter(novel.getChapters(), chapter -> {
+                ReadingFragment readingFragment = ReadingFragment.newInstance(chapter.getFileName());
                 getParentFragmentManager().beginTransaction()
                         .replace(R.id.fragment_container, readingFragment)
                         .addToBackStack(null)
                         .commit();
             });
+            rvChapters.setAdapter(chapterAdapter);
         }
 
         return view;
+    }
+
+    private void updateSaveButton() {
+        isSaved = db.isNovelSaved(username, novel.getTitle());
+        if (isSaved) {
+            btnSave.setText("REMOVE FROM LIBRARY");
+            btnSave.setBackgroundTintList(android.content.res.ColorStateList.valueOf(getResources().getColor(android.R.color.holo_red_dark)));
+        } else {
+            btnSave.setText("SAVE TO LIBRARY");
+            btnSave.setBackgroundTintList(android.content.res.ColorStateList.valueOf(getResources().getColor(android.R.color.holo_blue_dark)));
+        }
     }
 }

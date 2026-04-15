@@ -1,0 +1,11 @@
+Solo Leveling - Chapter 1
+
+Dunia telah berubah. Sejak kemunculan "Gate" yang menghubungkan dunia manusia dengan dunia monster, beberapa orang mendapatkan kekuatan khusus. Mereka disebut "Hunters".
+
+Sung Jin-Woo adalah Hunter tingkat E, yang paling lemah di antara yang terlemah. Dia mempertaruhkan nyawanya di dungeon tingkat rendah hanya untuk membiayai pengobatan ibunya.
+
+(Ini adalah contoh konten yang sangat panjang hingga 200 baris...)
+Baris 1
+Baris 2
+...
+Baris 200.
