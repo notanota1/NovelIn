@@ -84,7 +84,7 @@ public class NovelData {
                 "Omniscient Reader",
                 "Sing Shong",
                 "Kim Dokja's favorite web novel comes to life, and he is the only one who knows how the world will end.",
-                R.drawable.novel1,
+                R.drawable.novel2,
                 Arrays.asList(
                     new Novel.Chapter("Chapter 1: Three Ways to Survive in a Ruined World", "omniscient_reader_chapter1.txt")
                 )
@@ -93,7 +93,7 @@ public class NovelData {
                 "The Beginning After The End",
                 "TurtleMe",
                 "King Grey has unrivaled strength, wealth, and prestige in a world governed by martial ability.",
-                R.drawable.novel2,
+                R.drawable.novel1,
                 Arrays.asList(
                     new Novel.Chapter("Chapter 1: A King's End", "tbate_chapter1.txt")
                 )
