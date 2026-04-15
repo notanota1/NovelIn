@@ -27,7 +27,7 @@ public class HomeFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_library, container, false);
+        View view = inflater.inflate(R.layout.fragment_home, container, false);
         rvSavedNovels = view.findViewById(R.id.rvNovels);
         
         db = new DatabaseHelper(getContext());
@@ -45,6 +45,7 @@ public class HomeFragment extends Fragment {
         });
 
         rvSavedNovels.setLayoutManager(new GridLayoutManager(getContext(), 3));
+        rvSavedNovels.setHasFixedSize(true);
         rvSavedNovels.setAdapter(adapter);
 
         return view;
@@ -54,7 +55,6 @@ public class HomeFragment extends Fragment {
         savedNovelList = new ArrayList<>();
         List<String> savedTitles = db.getSavedNovels(username);
         
-        // Mengambil data terpusat dari NovelData
         List<Novel> allNovels = NovelData.getAllNovels();
         for (Novel n : allNovels) {
             if (savedTitles.contains(n.getTitle())) {
