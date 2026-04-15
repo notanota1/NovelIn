@@ -1,9 +1,12 @@
 package com.suryakusuma.novelin;
 
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -11,6 +14,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class LibraryFragment extends Fragment {
@@ -18,14 +22,15 @@ public class LibraryFragment extends Fragment {
     private RecyclerView rvNovels;
     private NovelAdapter adapter;
     private List<Novel> novelList;
+    private EditText etSearch;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_library, container, false);
         rvNovels = view.findViewById(R.id.rvNovels);
+        etSearch = view.findViewById(R.id.etSearch);
 
-        // Mengambil data terpusat dari NovelData
         novelList = NovelData.getAllNovels();
         
         adapter = new NovelAdapter(novelList, novel -> {
@@ -39,6 +44,30 @@ public class LibraryFragment extends Fragment {
         rvNovels.setLayoutManager(new GridLayoutManager(getContext(), 3));
         rvNovels.setAdapter(adapter);
 
+        // Menambahkan listener untuk fitur pencarian
+        etSearch.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                filter(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
         return view;
+    }
+
+    private void filter(String text) {
+        List<Novel> filteredList = new ArrayList<>();
+        for (Novel item : novelList) {
+            if (item.getTitle().toLowerCase().contains(text.toLowerCase())) {
+                filteredList.add(item);
+            }
+        }
+        adapter.filterList(filteredList);
     }
 }

@@ -9,6 +9,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class NovelAdapter extends RecyclerView.Adapter<NovelAdapter.NovelViewHolder> {
@@ -23,6 +24,12 @@ public class NovelAdapter extends RecyclerView.Adapter<NovelAdapter.NovelViewHol
     public NovelAdapter(List<Novel> novelList, OnItemClickListener listener) {
         this.novelList = novelList;
         this.listener = listener;
+    }
+
+    // Method untuk mengupdate list saat pencarian
+    public void filterList(List<Novel> filteredList) {
+        this.novelList = filteredList;
+        notifyDataSetChanged();
     }
 
     @NonNull
