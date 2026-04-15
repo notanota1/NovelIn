@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -41,10 +42,17 @@ public class ReadingFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_reading, container, false);
         TextView tvContent = view.findViewById(R.id.tvReadingContent);
+        ImageButton btnBack = view.findViewById(R.id.btnBack);
 
         if (fileName != null) {
             tvContent.setText(loadAssetFile(fileName));
         }
+
+        btnBack.setOnClickListener(v -> {
+            if (getActivity() != null) {
+                getActivity().onBackPressed();
+            }
+        });
 
         return view;
     }
