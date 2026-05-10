@@ -7,33 +7,37 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide; // Pakai Glide
-import com.suryakusuma.novelin.model.ItemsItem; // Sesuaikan dengan nama class Model API kamu
+import com.bumptech.glide.Glide;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class NovelAdapter extends RecyclerView.Adapter<NovelAdapter.NovelViewHolder> {
 
-    private List<ItemsItem> novelList = new ArrayList<>(); // Pakai model API
-    private final OnItemClickListener listener;
+    private List<Novel> novelList;
+    private OnItemClickListener listener;
 
     public interface OnItemClickListener {
-        void onItemClick(ItemsItem novel);
+        void onItemClick(Novel novel);
     }
 
-    public NovelAdapter(OnItemClickListener listener) {
+    // Constructor dengan 2 argumen untuk memperbaiki error "Expected 1 argument but found 2"
+    public NovelAdapter(List<Novel> novelList, OnItemClickListener listener) {
+        this.novelList = novelList;
         this.listener = listener;
     }
 
-    public void setNovelList(List<ItemsItem> newList) {
-        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new NovelDiffCallback(this.novelList, newList));
-        this.novelList.clear();
-        this.novelList.addAll(newList);
-        diffResult.dispatchUpdatesTo(this);
+    // Method filterList untuk memperbaiki error "Cannot resolve method 'filterList'"
+    public void filterList(List<Novel> filteredList) {
+        this.novelList = filteredList;
+        notifyDataSetChanged();
+    }
+
+    // Method untuk update data dari ViewModel nantinya
+    public void setNovelList(List<Novel> newList) {
+        this.novelList = newList;
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -45,26 +49,18 @@ public class NovelAdapter extends RecyclerView.Adapter<NovelAdapter.NovelViewHol
 
     @Override
     public void onBindViewHolder(@NonNull NovelViewHolder holder, int position) {
-        ItemsItem novel = novelList.get(position);
+        Novel novel = novelList.get(position);
+        holder.tvTitle.setText(novel.getTitle());
 
-        // Ambil data dari volumeInfo (struktur Google Books API)
-        if (novel.getVolumeInfo() != null) {
-            holder.tvTitle.setText(novel.getVolumeInfo().getTitle());
-
-            // Menggunakan Glide untuk load gambar dari URL
-            if (novel.getVolumeInfo().getImageLinks() != null) {
-                String imageUrl = novel.getVolumeInfo().getImageLinks().getThumbnail();
-                // Google API biasanya pakai http, ganti ke https agar aman di Android
-                if (imageUrl != null) {
-                    imageUrl = imageUrl.replace("http://", "https://");
-                }
-
-                Glide.with(holder.itemView.getContext())
-                        .load(imageUrl)
-                        .placeholder(R.drawable.placeholder_book) // gambar saat loading
-                        .error(R.drawable.error_image)           // gambar jika gagal
-                        .into(holder.ivCover);
-            }
+        // Memuat gambar: Prioritaskan coverUrl (API), jika kosong pakai coverResourceId (Lokal)
+        if (novel.getCoverUrl() != null && !novel.getCoverUrl().isEmpty()) {
+            Glide.with(holder.itemView.getContext())
+                    .load(novel.getCoverUrl())
+                    .placeholder(R.drawable.novel1) // Placeholder saat loading
+                    .error(R.drawable.novel1)       // Gambar jika gagal
+                    .into(holder.ivCover);
+        } else {
+            holder.ivCover.setImageResource(novel.getCoverResourceId());
         }
 
         holder.itemView.setOnClickListener(v -> listener.onItemClick(novel));
@@ -72,7 +68,7 @@ public class NovelAdapter extends RecyclerView.Adapter<NovelAdapter.NovelViewHol
 
     @Override
     public int getItemCount() {
-        return novelList.size();
+        return novelList != null ? novelList.size() : 0;
     }
 
     static class NovelViewHolder extends RecyclerView.ViewHolder {
@@ -83,30 +79,6 @@ public class NovelAdapter extends RecyclerView.Adapter<NovelAdapter.NovelViewHol
             super(itemView);
             ivCover = itemView.findViewById(R.id.ivCover);
             tvTitle = itemView.findViewById(R.id.tvTitle);
-        }
-    }
-
-    private static class NovelDiffCallback extends DiffUtil.Callback {
-        private final List<ItemsItem> oldList;
-        private final List<ItemsItem> newList;
-
-        public NovelDiffCallback(List<ItemsItem> oldList, List<ItemsItem> newList) {
-            this.oldList = oldList;
-            this.newList = newList;
-        }
-
-        @Override public int getOldListSize() { return oldList.size(); }
-        @Override public int getNewListSize() { return newList.size(); }
-
-        @Override
-        public boolean areItemsTheSame(int oldPos, int newPos) {
-            // Pakai ID unik dari API Google Books
-            return oldList.get(oldPos).getId().equals(newList.get(newPos).getId());
-        }
-
-        @Override
-        public boolean areContentsTheSame(int oldPos, int newPos) {
-            return oldList.get(oldPos).equals(newList.get(newPos));
         }
     }
 }
