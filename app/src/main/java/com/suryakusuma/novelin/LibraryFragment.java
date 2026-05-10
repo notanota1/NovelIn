@@ -69,12 +69,12 @@ public class LibraryFragment extends Fragment {
     private void filter(String text) {
         List<Novel> filteredList = new ArrayList<>();
         String query = text.toLowerCase().trim();
-        
+
         if (query.isEmpty()) {
             filteredList.addAll(novelList);
         } else {
             for (Novel item : novelList) {
-                if (item.getTitle().toLowerCase().contains(query) || 
+                if (item.getTitle().toLowerCase().contains(query) ||
                     item.getAuthor().toLowerCase().contains(query)) {
                     filteredList.add(item);
                 }
