@@ -33,6 +33,11 @@ public class RegisterActivity extends AppCompatActivity {
                 String confirmPwd = etConfirmPassword.getText().toString();
 
                 if (pwd.equals(confirmPwd)) {
+                    if (db.isUsernameExists(user)) {
+                        Toast.makeText(RegisterActivity.this,
+                                "Username sudah digunakan!", Toast.LENGTH_SHORT).show();
+                        return;
+                    } else {
                     boolean res = db.addUser(user, pwd);
                     if (res) {
                         Toast.makeText(RegisterActivity.this, "Successfully Registered", Toast.LENGTH_SHORT).show();
@@ -41,7 +46,7 @@ public class RegisterActivity extends AppCompatActivity {
                         finish();
                     } else {
                         Toast.makeText(RegisterActivity.this, "Registration Error", Toast.LENGTH_SHORT).show();
-                    }
+                    }}
                 } else {
                     Toast.makeText(RegisterActivity.this, "Passwords do not match", Toast.LENGTH_SHORT).show();
                 }

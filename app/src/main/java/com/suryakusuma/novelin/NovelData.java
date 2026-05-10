@@ -4,9 +4,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Kelas penyedia data (Data Provider) untuk mensimulasikan database lokal.
+ * Di sini semua daftar novel dan chapter didefinisikan secara statis.
+ */
 public class NovelData {
     public static List<Novel> getAllNovels() {
         List<Novel> list = new ArrayList<>();
+        
+        // Menambahkan data novel ke dalam list
+        // Parameter: Judul, Penulis, Deskripsi, Gambar Cover, Daftar Chapter
+        
         list.add(new Novel(
                 "The Woman in White",
                 "Wilkie Collinsq",
@@ -14,6 +22,7 @@ public class NovelData {
                 R.drawable.novel12,
                 Arrays.asList(new Novel.Chapter("Chapter 1: Once upon a time...", "woman_in_white_chapter1.txt"))
         ));
+        
         list.add(new Novel(
                 "And Then There Were None",
                 "Agatha Christie",
@@ -21,6 +30,7 @@ public class NovelData {
                 R.drawable.novel11,
                 Arrays.asList(new Novel.Chapter("Chapter 1: Once upon a time...", "and_then_there_were_none_chapter1.txt"))
         ));
+        
         list.add(new Novel(
                 "The Midnight Library",
                 "Matt Haig",
@@ -28,6 +38,7 @@ public class NovelData {
                 R.drawable.novel10,
                 Arrays.asList(new Novel.Chapter("Chapter 1: Once upon a time...", "midnight_library_chapter1.txt"))
         ));
+        
         list.add(new Novel(
                 "Harry Potter",
                 "J.K. Rowling",
@@ -35,6 +46,7 @@ public class NovelData {
                 R.drawable.novel9,
                 Arrays.asList(new Novel.Chapter("Chapter 1: Once upon a time...", "harry_potter_chapter1.txt"))
         ));
+        
         list.add(new Novel(
                 "Metamorphosis",
                 "Franz Kafka",
@@ -42,6 +54,7 @@ public class NovelData {
                 R.drawable.novel8,
                 Arrays.asList(new Novel.Chapter("Chapter 1: he woke up with the body of a cockroach...", "metamorphosis_chapter1.txt"))
         ));
+        
         list.add(new Novel(
                 "The Little Prince",
                 "Antoine de Saint-Exupéry",
@@ -49,6 +62,7 @@ public class NovelData {
                 R.drawable.novel7,
                 Arrays.asList(new Novel.Chapter("Chapter 1: He is a young, curious boy with golden hair who asks many questions...", "little_prince_chapter1.txt"))
         ));
+        
         list.add(new Novel(
                 "If Cat Disappeared from the World",
                 "Genki Kawamura",
@@ -56,6 +70,7 @@ public class NovelData {
                 R.drawable.novel6,
                 Arrays.asList(new Novel.Chapter("Chapter 1: Suddenly he is approached by a devil...", "if_cat_disappeared_chapter1.txt"))
         ));
+        
         list.add(new Novel(
                 "Animal Farm",
                 "George Orwell",
@@ -63,6 +78,7 @@ public class NovelData {
                 R.drawable.novel4,
                 Arrays.asList(new Novel.Chapter("Chapter 1: on a farm...", "animal_farm_chapter1.txt"))
         ));
+        
         list.add(new Novel(
                 "Don Quixote",
                 "Miguel De Cervantes Saavedra",
@@ -70,6 +86,7 @@ public class NovelData {
                 R.drawable.novel3,
                 Arrays.asList(new Novel.Chapter("Chapter 1: Once upon a time...", "don_quixote_chapter1.txt"))
         ));
+        
         list.add(new Novel(
                 "Solo Leveling",
                 "Chugong",
@@ -80,6 +97,7 @@ public class NovelData {
                     new Novel.Chapter("Chapter 2: The Double Dungeon", "solo_leveling_chapter2.txt")
                 )
         ));
+        
         list.add(new Novel(
                 "Omniscient Reader",
                 "Sing Shong",
@@ -89,6 +107,7 @@ public class NovelData {
                     new Novel.Chapter("Chapter 1: Three Ways to Survive in a Ruined World", "omniscient_reader_chapter1.txt")
                 )
         ));
+        
         list.add(new Novel(
                 "The Beginning After The End",
                 "TurtleMe",
@@ -98,6 +117,7 @@ public class NovelData {
                     new Novel.Chapter("Chapter 1: A King's End", "tbate_chapter1.txt")
                 )
         ));
+
         return list;
     }
 }
