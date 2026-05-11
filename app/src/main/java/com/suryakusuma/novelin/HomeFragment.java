@@ -52,14 +52,17 @@ public class HomeFragment extends Fragment {
     }
 
     private void loadSavedNovels() {
-        savedNovelList = new ArrayList<>();
-        List<String> savedTitles = db.getSavedNovels(username);
-        
-        List<Novel> allNovels = NovelData.getAllNovels();
-        for (Novel n : allNovels) {
-            if (savedTitles.contains(n.getTitle())) {
-                savedNovelList.add(n);
-            }
+        // Mengambil data lengkap novel yang tersimpan di database (termasuk dari API)
+        savedNovelList = db.getFullSavedNovels(username);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Refresh data saat kembali ke tab Home
+        loadSavedNovels();
+        if (adapter != null) {
+            adapter.setNovelList(savedNovelList);
         }
     }
 }

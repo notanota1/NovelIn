@@ -18,6 +18,8 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+
 public class DetailFragment extends Fragment {
 
     private static final String ARG_NOVEL = "novel";
@@ -66,7 +68,13 @@ public class DetailFragment extends Fragment {
         });
 
         if (novel != null) {
-            ivCover.setImageResource(novel.getCoverResourceId());
+            // Load Cover Image using Glide (API URL or local resource)
+            if (novel.getCoverUrl() != null && !novel.getCoverUrl().isEmpty()) {
+                Glide.with(this).load(novel.getCoverUrl()).placeholder(R.drawable.novel1).into(ivCover);
+            } else {
+                ivCover.setImageResource(novel.getCoverResourceId());
+            }
+
             tvTitle.setText(novel.getTitle());
             tvAuthor.setText("Author: " + novel.getAuthor());
             tvDesc.setText(novel.getDescription());
@@ -81,7 +89,8 @@ public class DetailFragment extends Fragment {
                         updateSaveButton();
                     }
                 } else {
-                    if (db.saveNovel(username, novel.getTitle())) {
+                    // Update: passing the whole novel object to save method
+                    if (db.saveNovel(username, novel)) {
                         Toast.makeText(getContext(), "Saved to Library", Toast.LENGTH_SHORT).show();
                         isSaved = true;
                         updateSaveButton();
