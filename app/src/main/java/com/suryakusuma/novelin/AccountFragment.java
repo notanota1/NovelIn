@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+import com.suryakusuma.novelin.GoogleSignInHelper;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -24,14 +25,29 @@ public class AccountFragment extends Fragment {
         TextView tvUsername = view.findViewById(R.id.tvAccountUsername);
         Button btnLogout = view.findViewById(R.id.btnLogout);
 
-        SharedPreferences sharedPref = getActivity().getSharedPreferences("UserSession", Context.MODE_PRIVATE);
-        String username = sharedPref.getString("username", "User");
+        SharedPreferences googlePrefs = getActivity().getSharedPreferences("google_session", Context.MODE_PRIVATE);
+        SharedPreferences manualPrefs = getActivity().getSharedPreferences("UserSession", Context.MODE_PRIVATE);
+
+        String googleName = googlePrefs.getString("name", "");
+        String manualName = manualPrefs.getString("username", "");
+
+        String username;
+        if (!googleName.isEmpty()) {
+            username = googleName;
+        } else if (!manualName.isEmpty()) {
+            username = manualName;
+        } else {
+            username = "User";
+        }
+
         tvUsername.setText(username);
 
         btnLogout.setOnClickListener(v -> {
-            SharedPreferences.Editor editor = sharedPref.edit();
-            editor.clear();
-            editor.apply();
+            GoogleSignInHelper googleSignInHelper = new GoogleSignInHelper(getActivity());
+            googleSignInHelper.signOut();
+
+            googlePrefs.edit().clear().apply();
+            manualPrefs.edit().clear().apply();
 
             Intent intent = new Intent(getActivity(), LoginActivity.class);
             startActivity(intent);
