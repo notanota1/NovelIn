@@ -3,28 +3,29 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8F9FA">
+    android:background="@drawable/bg_soft_purple"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:padding="24dp">
 
-        <!-- Header Profile Section -->
+        <!-- PROFILE HEADER -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
             android:orientation="vertical"
-            android:paddingVertical="20dp">
+            android:paddingVertical="24dp">
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="120dp"
                 android:layout_height="120dp"
                 app:cardCornerRadius="60dp"
-                app:cardElevation="4dp"
-                app:strokeWidth="2dp"
+                app:cardElevation="10dp"
+                app:strokeWidth="4dp"
                 app:strokeColor="@color/primary">
 
                 <ImageView
@@ -32,6 +33,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:scaleType="centerCrop"
+                    android:background="#F1F0FF"
                     android:src="@drawable/profile" />
             </com.google.android.material.card.MaterialCardView>
 
@@ -41,8 +43,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:text="Username"
-                android:textColor="@color/black"
-                android:textSize="22sp"
+                android:textColor="@color/text_primary"
+                android:textSize="20sp"
+                android:letterSpacing="0.03"
                 android:textStyle="bold" />
 
             <TextView
@@ -50,43 +53,43 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="user@example.com"
-                android:textColor="@color/gray_text"
+                android:textColor="@color/text_secondary"
                 android:textSize="14sp" />
+
         </LinearLayout>
 
-        <!-- Settings Menu Section -->
+        <!-- SECTION TITLE -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
             android:text="Settings &amp; Info"
-            android:textColor="@color/gray_text"
-            android:textSize="14sp"
-            android:textStyle="bold" />
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp" />
 
+        <!-- SETTINGS CARD -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="32dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="2dp">
+            app:cardCornerRadius="16dp"
+            app:cardElevation="6dp"
+            app:cardBackgroundColor="@color/card_bg"
+            app:strokeColor="#ECEBFF"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="#F0F0F0" />
-
-                <!-- Dark Mode Menu -->
+                <!-- DARK MODE -->
                 <LinearLayout
                     android:id="@+id/menuDarkMode"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="?attr/selectableItemBackground"
+                    android:foreground="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true"
                     android:gravity="center_vertical"
@@ -96,7 +99,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@android:drawable/ic_menu_day"
-                        app:tint="@color/gray_text" />
+                        app:tint="@color/primary_soft" />
 
                     <TextView
                         android:layout_width="0dp"
@@ -104,27 +107,28 @@
                         android:layout_marginStart="16dp"
                         android:layout_weight="1"
                         android:text="Appearance"
-                        android:textSize="16sp" />
+                        android:textColor="@color/text_primary"
+                        android:textSize="15sp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Light Mode"
-                        android:textColor="@color/gray_text"
+                        android:text="Light"
+                        android:textColor="@color/text_secondary"
                         android:textSize="12sp" />
                 </LinearLayout>
 
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
-                    android:background="#F0F0F0" />
+                    android:background="#F1F0FF" />
 
-                <!-- About Menu -->
+                <!-- ABOUT -->
                 <LinearLayout
                     android:id="@+id/menuAbout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="?attr/selectableItemBackground"
+                    android:foreground="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true"
                     android:gravity="center_vertical"
@@ -134,7 +138,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@android:drawable/ic_menu_info_details"
-                        app:tint="@color/gray_text" />
+                        app:tint="@color/primary_soft" />
 
                     <TextView
                         android:layout_width="0dp"
@@ -142,32 +146,37 @@
                         android:layout_marginStart="16dp"
                         android:layout_weight="1"
                         android:text="About NovelIn"
-                        android:textSize="16sp" />
+                        android:textColor="@color/text_primary"
+                        android:textSize="15sp" />
                 </LinearLayout>
+
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Logout Button -->
+        <!-- LOGOUT BUTTON (FIX PREMIUM) -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLogout"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
+            android:layout_height="52dp"
             android:text="Log Out"
             android:textAllCaps="false"
-            android:textColor="@color/white"
-            android:textSize="16sp"
-            app:backgroundTint="@color/error"
-            app:cornerRadius="12dp"
+            android:textSize="15sp"
+            android:textColor="@color/primary"
+            app:backgroundTint="#F1F0FF"
+            app:cornerRadius="26dp"
             app:icon="@android:drawable/ic_lock_power_off"
-            app:iconGravity="textStart" />
+            app:iconTint="@color/primary"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp" />
 
+        <!-- VERSION -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_marginTop="24dp"
             android:text="Version 1.0.0"
-            android:textColor="@color/gray_text"
+            android:textColor="@color/text_secondary"
             android:textSize="12sp" />
 
     </LinearLayout>

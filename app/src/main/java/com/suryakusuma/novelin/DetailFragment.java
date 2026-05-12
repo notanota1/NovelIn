@@ -60,6 +60,7 @@ public class DetailFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
+
         View view = inflater.inflate(R.layout.fragment_detail, container, false);
 
         ImageButton btnBack = view.findViewById(R.id.btnBackDetail);
@@ -96,19 +97,39 @@ public class DetailFragment extends Fragment {
         updateSaveButton();
         btnSave.setOnClickListener(v -> toggleSave());
 
-        // Chapters RecyclerView
+        // RecyclerView
         rvChapters.setLayoutManager(new LinearLayoutManager(getContext()));
+
         chapterAdapter = new ChapterAdapter(novel.getChapters(), chapter -> {
+
+            // Animasi klik
+            if (getView() != null) {
+                getView().animate()
+                        .alpha(0.7f)
+                        .setDuration(100)
+                        .withEndAction(() ->
+                                getView().animate().alpha(1f).setDuration(100).start())
+                        .start();
+            }
+
             String source = novel.getSource();
             ReadingFragment readingFragment = ReadingFragment.newInstance(chapter.getUrl(), source);
+
             getParentFragmentManager().beginTransaction()
+                    .setCustomAnimations(
+                            android.R.anim.fade_in,
+                            android.R.anim.fade_out,
+                            android.R.anim.fade_in,
+                            android.R.anim.fade_out
+                    )
                     .replace(R.id.fragment_container, readingFragment)
                     .addToBackStack(null)
                     .commit();
         });
+
         rvChapters.setAdapter(chapterAdapter);
 
-        // Jika novel dari web, fetch detail & chapters
+        // Load dari web
         if (!novel.getNovelUrl().isEmpty()) {
             loadDetailIfNeeded();
             loadChapters();
@@ -117,9 +138,21 @@ public class DetailFragment extends Fragment {
         return view;
     }
 
-    /**
-     * Muat sinopsis & author dari halaman detail jika belum ada.
-     */
+    // ✨ ANIMASI MASUK FRAGMENT
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        view.setAlpha(0f);
+        view.setTranslationY(50f);
+
+        view.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(500)
+                .start();
+    }
+
     private void loadDetailIfNeeded() {
         boolean needsDetail = novel.getAuthor().isEmpty() || novel.getDescription().isEmpty();
         if (!needsDetail) return;
@@ -130,10 +163,9 @@ public class DetailFragment extends Fragment {
                 if (getActivity() == null) return;
                 getActivity().runOnUiThread(() -> refreshAuthorDesc());
             }
+
             @Override
-            public void onError(Exception e) {
-                // Gagal fetch detail — tampilkan info kosong, tidak perlu toast
-            }
+            public void onError(Exception e) { }
         });
     }
 
@@ -147,27 +179,32 @@ public class DetailFragment extends Fragment {
 
     private void loadChapters() {
         if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
+
         scraper.getChapters(novel.getNovelUrl(), novel.getSource(),
-            new NovelScraper.ScrapeListener<List<Novel.Chapter>>() {
-                @Override
-                public void onResult(List<Novel.Chapter> result) {
-                    if (getActivity() == null) return;
-                    getActivity().runOnUiThread(() -> {
-                        if (progressBar != null) progressBar.setVisibility(View.GONE);
-                        novel.setChapters(result);
-                        chapterAdapter.setChapters(result);
-                    });
-                }
-                @Override
-                public void onError(Exception e) {
-                    if (getActivity() == null) return;
-                    getActivity().runOnUiThread(() -> {
-                        if (progressBar != null) progressBar.setVisibility(View.GONE);
-                        Toast.makeText(getContext(),
-                            "Gagal memuat chapter: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    });
-                }
-            });
+                new NovelScraper.ScrapeListener<List<Novel.Chapter>>() {
+
+                    @Override
+                    public void onResult(List<Novel.Chapter> result) {
+                        if (getActivity() == null) return;
+
+                        getActivity().runOnUiThread(() -> {
+                            if (progressBar != null) progressBar.setVisibility(View.GONE);
+                            novel.setChapters(result);
+                            chapterAdapter.setChapters(result);
+                        });
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        if (getActivity() == null) return;
+
+                        getActivity().runOnUiThread(() -> {
+                            if (progressBar != null) progressBar.setVisibility(View.GONE);
+                            Toast.makeText(getContext(),
+                                    "Gagal memuat chapter", Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                });
     }
 
     private void toggleSave() {
@@ -187,17 +224,21 @@ public class DetailFragment extends Fragment {
     }
 
     private void updateSaveButton() {
+        Context context = getContext();
+        if (context == null) return;
+
         isSaved = db.isNovelSaved(username, novel.getTitle());
+
         if (isSaved) {
             btnSave.setText("HAPUS DARI LIBRARY");
             btnSave.setBackgroundTintList(
-                android.content.res.ColorStateList.valueOf(
-                    getResources().getColor(android.R.color.holo_red_dark)));
+                    android.content.res.ColorStateList.valueOf(
+                            context.getColor(android.R.color.holo_red_dark)));
         } else {
             btnSave.setText("SIMPAN KE LIBRARY");
             btnSave.setBackgroundTintList(
-                android.content.res.ColorStateList.valueOf(
-                    getResources().getColor(android.R.color.holo_blue_dark)));
+                    android.content.res.ColorStateList.valueOf(
+                            context.getColor(android.R.color.holo_blue_dark)));
         }
     }
 }

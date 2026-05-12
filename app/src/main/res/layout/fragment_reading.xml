@@ -1,32 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:fitsSystemWindows="true"
+    android:padding="16dp">
 
+    <!-- Header (Back Button) -->
     <ImageButton
         android:id="@+id/btnBack"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
         android:src="@android:drawable/ic_menu_revert"
         android:background="?attr/selectableItemBackgroundBorderless"
-        android:padding="8dp"
-        android:layout_margin="8dp"
-        android:contentDescription="Back" />
+        android:contentDescription="Back"
+        android:elevation="4dp"
+        android:padding="12dp"
+        android:layout_marginBottom="8dp"
+        android:scaleType="center" />
 
+    <!-- Content -->
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/btnBack"
-        android:paddingLeft="16dp"
-        android:paddingRight="16dp"
-        android:paddingBottom="16dp">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
         <TextView
             android:id="@+id/tvReadingContent"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="16sp"
-            android:lineSpacingExtra="4dp"
+            android:lineSpacingExtra="6dp"
             android:justificationMode="inter_word" />
+
     </ScrollView>
-</RelativeLayout>
+
+</LinearLayout>

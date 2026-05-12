@@ -1,9 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.NovelIn" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+
+    <style name="Theme.NovelIn" parent="Theme.Material3.DayNight.NoActionBar">
+
+        <!-- PRIMARY -->
+        <item name="colorPrimary">#A970FF</item>
+        <item name="colorSecondary">#C8A2FF</item>
+
+        <!-- BACKGROUND -->
+        <item name="android:windowBackground">#FFFFFF</item>
+
+        <!-- STATUS BAR -->
+        <item name="android:statusBarColor">#FFFFFF</item>
+
+        <!-- NAV BAR -->
+        <item name="android:navigationBarColor">#FFFFFF</item>
+
     </style>
 
-    <style name="Theme.NovelIn" parent="Base.Theme.NovelIn" />
 </resources>

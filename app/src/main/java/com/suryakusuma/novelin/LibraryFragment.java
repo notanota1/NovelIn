@@ -51,7 +51,7 @@ public class LibraryFragment extends Fragment {
         });
 
         // Grid 3 kolom untuk tampilan lebih banyak novel
-        GridLayoutManager layoutManager = new GridLayoutManager(getContext(), 3);
+        GridLayoutManager layoutManager = new GridLayoutManager(getContext(), 2);
         rvNovels.setLayoutManager(layoutManager);
         rvNovels.setHasFixedSize(false);
         rvNovels.setAdapter(adapter);

@@ -1,11 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-    <color name="primary">#6200EE</color>
-    <color name="primary_variant">#3700B3</color>
-    <color name="accent">#03DAC5</color>
-    <color name="error">#FF5252</color>
-    <color name="gray_light">#F5F5F5</color>
-    <color name="gray_text">#757575</color>
+    <color name="soft_purple_bg">#F7F4FF</color>
+    <!-- Main -->
+    <color name="primary">#B388FF</color>
+    <color name="primary_soft">#DCC6FF</color>
+
+    <!-- Background -->
+    <color name="background">#F7F4FF</color>
+    <color name="card_bg">#FFFFFF</color>
+    <color name="card_purple">#EFE7FF</color>
+
+    <!-- Text -->
+    <color name="text_primary">#1F1F1F</color>
+    <color name="text_secondary">#7A7A7A</color>
+
+    <!-- Others -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+
 </resources>
