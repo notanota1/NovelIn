@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -20,6 +21,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 
+import java.util.List;
+
 public class DetailFragment extends Fragment {
 
     private static final String ARG_NOVEL = "novel";
@@ -28,6 +31,9 @@ public class DetailFragment extends Fragment {
     private String username;
     private Button btnSave;
     private boolean isSaved;
+    private ChapterAdapter chapterAdapter;
+    private ProgressBar progressBar;
+    private final NovelScraper scraper = new NovelScraper();
 
     public static DetailFragment newInstance(Novel novel) {
         DetailFragment fragment = new DetailFragment();
@@ -60,6 +66,7 @@ public class DetailFragment extends Fragment {
         TextView tvDesc = view.findViewById(R.id.tvDetailDesc);
         btnSave = view.findViewById(R.id.btnSave);
         RecyclerView rvChapters = view.findViewById(R.id.rvChapters);
+        progressBar = view.findViewById(R.id.progressBar); // Pastikan ada ProgressBar di layout
 
         btnBack.setOnClickListener(v -> {
             if (getActivity() != null) {
@@ -68,7 +75,6 @@ public class DetailFragment extends Fragment {
         });
 
         if (novel != null) {
-            // Load Cover Image using Glide (API URL or local resource)
             if (novel.getCoverUrl() != null && !novel.getCoverUrl().isEmpty()) {
                 Glide.with(this).load(novel.getCoverUrl()).placeholder(R.drawable.novel1).into(ivCover);
             } else {
@@ -89,7 +95,6 @@ public class DetailFragment extends Fragment {
                         updateSaveButton();
                     }
                 } else {
-                    // Update: passing the whole novel object to save method
                     if (db.saveNovel(username, novel)) {
                         Toast.makeText(getContext(), "Saved to Library", Toast.LENGTH_SHORT).show();
                         isSaved = true;
@@ -98,19 +103,48 @@ public class DetailFragment extends Fragment {
                 }
             });
 
-            // Set up Chapters RecyclerView
             rvChapters.setLayoutManager(new LinearLayoutManager(getContext()));
-            ChapterAdapter chapterAdapter = new ChapterAdapter(novel.getChapters(), chapter -> {
-                ReadingFragment readingFragment = ReadingFragment.newInstance(chapter.getFileName());
+            chapterAdapter = new ChapterAdapter(novel.getChapters(), chapter -> {
+                // Pass URL atau fileName ke ReadingFragment
+                ReadingFragment readingFragment = ReadingFragment.newInstance(chapter.getUrl());
                 getParentFragmentManager().beginTransaction()
                         .replace(R.id.fragment_container, readingFragment)
                         .addToBackStack(null)
                         .commit();
             });
             rvChapters.setAdapter(chapterAdapter);
+
+            // Jika ada novelUrl (hasil scraping), ambil daftar chapter secara dinamis
+            if (novel.getNovelUrl() != null && !novel.getNovelUrl().isEmpty()) {
+                loadChapters();
+            }
         }
 
         return view;
+    }
+
+    private void loadChapters() {
+        if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
+        scraper.getChapters(novel.getNovelUrl(), new NovelScraper.ScrapeListener<List<Novel.Chapter>>() {
+            @Override
+            public void onResult(List<Novel.Chapter> result) {
+                if (getActivity() == null) return;
+                getActivity().runOnUiThread(() -> {
+                    if (progressBar != null) progressBar.setVisibility(View.GONE);
+                    novel.setChapters(result);
+                    chapterAdapter.setChapters(result);
+                });
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (getActivity() == null) return;
+                getActivity().runOnUiThread(() -> {
+                    if (progressBar != null) progressBar.setVisibility(View.GONE);
+                    Toast.makeText(getContext(), "Gagal memuat chapter: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+            }
+        });
     }
 
     private void updateSaveButton() {

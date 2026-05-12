@@ -5,7 +5,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -18,13 +20,16 @@ import java.io.InputStreamReader;
 
 public class ReadingFragment extends Fragment {
 
-    private static final String ARG_FILE_NAME = "file_name";
-    private String fileName;
+    private static final String ARG_URL_OR_FILE = "url_or_file";
+    private String urlOrFile;
+    private TextView tvContent;
+    private ProgressBar progressBar;
+    private final NovelScraper scraper = new NovelScraper();
 
-    public static ReadingFragment newInstance(String fileName) {
+    public static ReadingFragment newInstance(String urlOrFile) {
         ReadingFragment fragment = new ReadingFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_FILE_NAME, fileName);
+        args.putString(ARG_URL_OR_FILE, urlOrFile);
         fragment.setArguments(args);
         return fragment;
     }
@@ -33,7 +38,7 @@ public class ReadingFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            fileName = getArguments().getString(ARG_FILE_NAME);
+            urlOrFile = getArguments().getString(ARG_URL_OR_FILE);
         }
     }
 
@@ -41,11 +46,16 @@ public class ReadingFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_reading, container, false);
-        TextView tvContent = view.findViewById(R.id.tvReadingContent);
+        tvContent = view.findViewById(R.id.tvReadingContent);
+        progressBar = view.findViewById(R.id.progressBar); // Pastikan ada ProgressBar di fragment_reading.xml
         ImageButton btnBack = view.findViewById(R.id.btnBack);
 
-        if (fileName != null) {
-            tvContent.setText(loadAssetFile(fileName));
+        if (urlOrFile != null) {
+            if (urlOrFile.startsWith("http")) {
+                loadOnlineContent(urlOrFile);
+            } else {
+                tvContent.setText(loadAssetFile(urlOrFile));
+            }
         }
 
         btnBack.setOnClickListener(v -> {
@@ -55,6 +65,29 @@ public class ReadingFragment extends Fragment {
         });
 
         return view;
+    }
+
+    private void loadOnlineContent(String url) {
+        if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
+        scraper.getChapterContent(url, new NovelScraper.ScrapeListener<String>() {
+            @Override
+            public void onResult(String result) {
+                if (getActivity() == null) return;
+                getActivity().runOnUiThread(() -> {
+                    if (progressBar != null) progressBar.setVisibility(View.GONE);
+                    tvContent.setText(result);
+                });
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (getActivity() == null) return;
+                getActivity().runOnUiThread(() -> {
+                    if (progressBar != null) progressBar.setVisibility(View.GONE);
+                    Toast.makeText(getContext(), "Gagal memuat konten: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+            }
+        });
     }
 
     private String loadAssetFile(String name) {

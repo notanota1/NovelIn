@@ -57,6 +57,7 @@ dependencies {
     implementation(libs.lifecycle.livedata)
 
     implementation(libs.glide)
+    implementation(libs.jsoup)
 
     implementation(libs.appcompat)
     implementation(libs.material)

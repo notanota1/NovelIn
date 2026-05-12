@@ -8,11 +8,12 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ChapterAdapter extends RecyclerView.Adapter<ChapterAdapter.ChapterViewHolder> {
 
-    private final List<Novel.Chapter> chapters;
+    private List<Novel.Chapter> chapters;
     private final OnChapterClickListener listener;
 
     public interface OnChapterClickListener {
@@ -20,8 +21,13 @@ public class ChapterAdapter extends RecyclerView.Adapter<ChapterAdapter.ChapterV
     }
 
     public ChapterAdapter(List<Novel.Chapter> chapters, OnChapterClickListener listener) {
-        this.chapters = chapters;
+        this.chapters = chapters != null ? chapters : new ArrayList<>();
         this.listener = listener;
+    }
+
+    public void setChapters(List<Novel.Chapter> chapters) {
+        this.chapters = chapters;
+        notifyDataSetChanged();
     }
 
     @NonNull
