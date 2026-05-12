@@ -27,7 +27,8 @@ public class NovelViewModel extends ViewModel {
         _isLoading.setValue(true);
         page = 1;
         
-        scraper.browseNovels(NovelScraper.SOURCE_MEIONOVEL, page, new NovelScraper.ScrapeListener<List<Novel>>() {
+        // Menggunakan RanobeDB API untuk browse awal
+        scraper.browseNovels(page, new NovelScraper.ScrapeListener<List<Novel>>() {
             @Override
             public void onResult(List<Novel> result) {
                 _novels.postValue(result);
@@ -36,7 +37,7 @@ public class NovelViewModel extends ViewModel {
 
             @Override
             public void onError(Exception e) {
-                _errorMessage.postValue(e.getMessage());
+                _errorMessage.postValue("Gagal memuat data: " + e.getMessage());
                 _isLoading.postValue(false);
             }
         });
@@ -47,9 +48,8 @@ public class NovelViewModel extends ViewModel {
         
         _isLoading.setValue(true);
         page++;
-        final int p = page;
         
-        scraper.browseNovels(NovelScraper.SOURCE_MEIONOVEL, p, new NovelScraper.ScrapeListener<List<Novel>>() {
+        scraper.browseNovels(page, new NovelScraper.ScrapeListener<List<Novel>>() {
             @Override
             public void onResult(List<Novel> result) {
                 List<Novel> current = _novels.getValue();
@@ -69,9 +69,13 @@ public class NovelViewModel extends ViewModel {
     }
 
     public void searchNovels(String query) {
-        if (query == null || query.trim().isEmpty()) return;
+        if (query == null || query.trim().isEmpty()) {
+            loadBrowseNovels();
+            return;
+        }
         
         _isLoading.setValue(true);
+        // Menggunakan RanobeDB API untuk searching
         scraper.searchNovels(query.trim(), new NovelScraper.ScrapeListener<List<Novel>>() {
             @Override
             public void onResult(List<Novel> result) {
@@ -81,7 +85,7 @@ public class NovelViewModel extends ViewModel {
 
             @Override
             public void onError(Exception e) {
-                _errorMessage.postValue(e.getMessage());
+                _errorMessage.postValue("Pencarian gagal: " + e.getMessage());
                 _isLoading.postValue(false);
             }
         });
