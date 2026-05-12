@@ -64,6 +64,26 @@
                 android:layout_marginBottom="20dp"
                 android:alpha="0.7"/>
 
+            <TextView
+                android:id="@+id/tvDetailLang"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:layout_marginBottom="8dp"
+                android:textColor="?android:attr/textColorSecondary"/>
+
+            <TextView
+                android:id="@+id/tvDetailTags"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:layout_marginBottom="16dp"
+                android:textColor="@android:color/holo_blue_dark"
+                android:textStyle="italic"/>
+
+
             <!-- BUTTON -->
             <Button
                 android:id="@+id/btnSave"
@@ -103,6 +123,7 @@
                 android:id="@+id/progressBar"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center"
                 android:visibility="gone"
                 android:layout_marginBottom="16dp"/>
 

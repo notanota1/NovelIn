@@ -35,13 +35,13 @@ public class NovelScraper {
     private static final String BASE_SAKURA = "https://sakuranovel.id";
     private static final String BASE_WUXIA  = "https://wuxiaworld.site";
     private static final String BASE_RANOBEDB = "https://ranobedb.org/api/v0/";
-    
+
     // Base URL untuk gambar RanobeDB
     private static final String IMAGE_BASE_URL = "https://images.ranobedb.org/";
 
     private static final String UA =
-        "Mozilla/5.0 (Linux; Android 12; Pixel 6) AppleWebKit/537.36 " +
-        "(KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
+            "Mozilla/5.0 (Linux; Android 12; Pixel 6) AppleWebKit/537.36 " +
+                    "(KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
 
     private final ExecutorService executor = Executors.newFixedThreadPool(3);
     private final RanobeApiService apiService;
@@ -138,7 +138,7 @@ public class NovelScraper {
         if (item.book != null && item.book.image != null) {
             coverUrl = IMAGE_BASE_URL + item.book.image.filename;
         }
-        
+
         Novel novel = new Novel(item.title, "", "", coverUrl, "");
         novel.setId(String.valueOf(item.id));
         novel.setSource(SOURCE_RANOBEDB);
@@ -190,7 +190,7 @@ public class NovelScraper {
                     Document doc = Jsoup.connect(novel.getNovelUrl()).userAgent(UA).timeout(15000).get();
                     applyScrapedDetail(doc, novel);
                 }
-                
+
                 listener.onResult(novel);
             } catch (Exception e) {
                 listener.onError(e);
@@ -214,7 +214,7 @@ public class NovelScraper {
                 }
                 Document doc = Jsoup.connect(novelUrl).userAgent(UA).timeout(15000).get();
                 List<Novel.Chapter> chapters = parseChapters(doc);
-                
+
                 if (chapters.isEmpty()) {
                     String ajaxUrl = novelUrl.endsWith("/") ? novelUrl + "ajax/chapters/" : novelUrl + "/ajax/chapters/";
                     try {
