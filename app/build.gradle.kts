@@ -1,5 +1,3 @@
-import java.util.Properties
-
 plugins {
     alias(libs.plugins.android.application)
 }
@@ -14,19 +12,10 @@ android {
         applicationId = "com.suryakusuma.novelin"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        val properties = Properties()
-        val localPropertiesFile = project.rootProject.file("local.properties")
-        if (localPropertiesFile.exists()) {
-            properties.load(localPropertiesFile.inputStream())
-        }
-
-        val apiKey = properties.getProperty("GOOGLE_BOOKS_API_KEY") ?: ""
-        buildConfigField("String", "BOOKS_API_KEY", "\"$apiKey\"")
     }
 
     buildFeatures {
@@ -59,20 +48,25 @@ dependencies {
         // Google Sign-In
         implementation("com.google.android.gms:play-services-auth:21.0.0")
     }
-    implementation(libs.retrofit)
-    implementation(libs.converter.gson)
     implementation(libs.logging.interceptor)
 
+    // HTML parsing
+    implementation(libs.jsoup)
+
+    // Image loading
+    implementation(libs.glide)
+
+    // Architecture Components
     implementation(libs.lifecycle.viewmodel)
     implementation(libs.lifecycle.livedata)
 
-    implementation(libs.glide)
-    implementation(libs.jsoup)
-
+    // UI
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
+
+    // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

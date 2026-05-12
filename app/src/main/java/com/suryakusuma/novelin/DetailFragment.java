@@ -33,6 +33,8 @@ public class DetailFragment extends Fragment {
     private boolean isSaved;
     private ChapterAdapter chapterAdapter;
     private ProgressBar progressBar;
+    private TextView tvAuthor;
+    private TextView tvDesc;
     private final NovelScraper scraper = new NovelScraper();
 
     public static DetailFragment newInstance(Novel novel) {
@@ -50,111 +52,152 @@ public class DetailFragment extends Fragment {
             novel = (Novel) getArguments().getSerializable(ARG_NOVEL);
         }
         db = new DatabaseHelper(getContext());
-        SharedPreferences sharedPref = getActivity().getSharedPreferences("UserSession", Context.MODE_PRIVATE);
-        username = sharedPref.getString("username", "");
+        SharedPreferences prefs = requireActivity().getSharedPreferences("UserSession", Context.MODE_PRIVATE);
+        username = prefs.getString("username", "");
     }
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_detail, container, false);
 
         ImageButton btnBack = view.findViewById(R.id.btnBackDetail);
-        ImageView ivCover = view.findViewById(R.id.ivDetailCover);
-        TextView tvTitle = view.findViewById(R.id.tvDetailTitle);
-        TextView tvAuthor = view.findViewById(R.id.tvDetailAuthor);
-        TextView tvDesc = view.findViewById(R.id.tvDetailDesc);
-        btnSave = view.findViewById(R.id.btnSave);
+        ImageView ivCover   = view.findViewById(R.id.ivDetailCover);
+        TextView tvTitle    = view.findViewById(R.id.tvDetailTitle);
+        tvAuthor            = view.findViewById(R.id.tvDetailAuthor);
+        tvDesc              = view.findViewById(R.id.tvDetailDesc);
+        btnSave             = view.findViewById(R.id.btnSave);
         RecyclerView rvChapters = view.findViewById(R.id.rvChapters);
-        progressBar = view.findViewById(R.id.progressBar); // Pastikan ada ProgressBar di layout
+        progressBar         = view.findViewById(R.id.progressBar);
 
         btnBack.setOnClickListener(v -> {
-            if (getActivity() != null) {
-                getActivity().onBackPressed();
-            }
+            if (getActivity() != null) getActivity().onBackPressed();
         });
 
-        if (novel != null) {
-            if (novel.getCoverUrl() != null && !novel.getCoverUrl().isEmpty()) {
-                Glide.with(this).load(novel.getCoverUrl()).placeholder(R.drawable.novel1).into(ivCover);
-            } else {
-                ivCover.setImageResource(novel.getCoverResourceId());
-            }
+        if (novel == null) return view;
 
-            tvTitle.setText(novel.getTitle());
-            tvAuthor.setText("Author: " + novel.getAuthor());
-            tvDesc.setText(novel.getDescription());
+        // Cover
+        if (!novel.getCoverUrl().isEmpty()) {
+            Glide.with(this)
+                    .load(novel.getCoverUrl())
+                    .placeholder(R.drawable.novel1)
+                    .error(R.drawable.novel1)
+                    .into(ivCover);
+        } else {
+            ivCover.setImageResource(novel.getCoverResourceId() != 0
+                    ? novel.getCoverResourceId() : R.drawable.novel1);
+        }
 
-            updateSaveButton();
+        tvTitle.setText(novel.getTitle());
+        refreshAuthorDesc();
 
-            btnSave.setOnClickListener(v -> {
-                if (isSaved) {
-                    if (db.deleteSavedNovel(username, novel.getTitle())) {
-                        Toast.makeText(getContext(), "Removed from Library", Toast.LENGTH_SHORT).show();
-                        isSaved = false;
-                        updateSaveButton();
-                    }
-                } else {
-                    if (db.saveNovel(username, novel)) {
-                        Toast.makeText(getContext(), "Saved to Library", Toast.LENGTH_SHORT).show();
-                        isSaved = true;
-                        updateSaveButton();
-                    }
-                }
-            });
+        // Save button
+        updateSaveButton();
+        btnSave.setOnClickListener(v -> toggleSave());
 
-            rvChapters.setLayoutManager(new LinearLayoutManager(getContext()));
-            chapterAdapter = new ChapterAdapter(novel.getChapters(), chapter -> {
-                // Pass URL atau fileName ke ReadingFragment
-                ReadingFragment readingFragment = ReadingFragment.newInstance(chapter.getUrl());
-                getParentFragmentManager().beginTransaction()
-                        .replace(R.id.fragment_container, readingFragment)
-                        .addToBackStack(null)
-                        .commit();
-            });
-            rvChapters.setAdapter(chapterAdapter);
+        // Chapters RecyclerView
+        rvChapters.setLayoutManager(new LinearLayoutManager(getContext()));
+        chapterAdapter = new ChapterAdapter(novel.getChapters(), chapter -> {
+            String source = novel.getSource();
+            ReadingFragment readingFragment = ReadingFragment.newInstance(chapter.getUrl(), source);
+            getParentFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, readingFragment)
+                    .addToBackStack(null)
+                    .commit();
+        });
+        rvChapters.setAdapter(chapterAdapter);
 
-            // Jika ada novelUrl (hasil scraping), ambil daftar chapter secara dinamis
-            if (novel.getNovelUrl() != null && !novel.getNovelUrl().isEmpty()) {
-                loadChapters();
-            }
+        // Jika novel dari web, fetch detail & chapters
+        if (!novel.getNovelUrl().isEmpty()) {
+            loadDetailIfNeeded();
+            loadChapters();
         }
 
         return view;
     }
 
-    private void loadChapters() {
-        if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
-        scraper.getChapters(novel.getNovelUrl(), new NovelScraper.ScrapeListener<List<Novel.Chapter>>() {
-            @Override
-            public void onResult(List<Novel.Chapter> result) {
-                if (getActivity() == null) return;
-                getActivity().runOnUiThread(() -> {
-                    if (progressBar != null) progressBar.setVisibility(View.GONE);
-                    novel.setChapters(result);
-                    chapterAdapter.setChapters(result);
-                });
-            }
+    /**
+     * Muat sinopsis & author dari halaman detail jika belum ada.
+     */
+    private void loadDetailIfNeeded() {
+        boolean needsDetail = novel.getAuthor().isEmpty() || novel.getDescription().isEmpty();
+        if (!needsDetail) return;
 
+        scraper.getNovelDetail(novel, new NovelScraper.ScrapeListener<Novel>() {
+            @Override
+            public void onResult(Novel result) {
+                if (getActivity() == null) return;
+                getActivity().runOnUiThread(() -> refreshAuthorDesc());
+            }
             @Override
             public void onError(Exception e) {
-                if (getActivity() == null) return;
-                getActivity().runOnUiThread(() -> {
-                    if (progressBar != null) progressBar.setVisibility(View.GONE);
-                    Toast.makeText(getContext(), "Gagal memuat chapter: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
+                // Gagal fetch detail — tampilkan info kosong, tidak perlu toast
             }
         });
+    }
+
+    private void refreshAuthorDesc() {
+        String author = novel.getAuthor();
+        tvAuthor.setText(author.isEmpty() ? "Penulis: -" : "Penulis: " + author);
+
+        String desc = novel.getDescription();
+        tvDesc.setText(desc.isEmpty() ? "Sinopsis tidak tersedia." : desc);
+    }
+
+    private void loadChapters() {
+        if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
+        scraper.getChapters(novel.getNovelUrl(), novel.getSource(),
+            new NovelScraper.ScrapeListener<List<Novel.Chapter>>() {
+                @Override
+                public void onResult(List<Novel.Chapter> result) {
+                    if (getActivity() == null) return;
+                    getActivity().runOnUiThread(() -> {
+                        if (progressBar != null) progressBar.setVisibility(View.GONE);
+                        novel.setChapters(result);
+                        chapterAdapter.setChapters(result);
+                    });
+                }
+                @Override
+                public void onError(Exception e) {
+                    if (getActivity() == null) return;
+                    getActivity().runOnUiThread(() -> {
+                        if (progressBar != null) progressBar.setVisibility(View.GONE);
+                        Toast.makeText(getContext(),
+                            "Gagal memuat chapter: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+                }
+            });
+    }
+
+    private void toggleSave() {
+        if (isSaved) {
+            if (db.deleteSavedNovel(username, novel.getTitle())) {
+                Toast.makeText(getContext(), "Dihapus dari Library", Toast.LENGTH_SHORT).show();
+                isSaved = false;
+                updateSaveButton();
+            }
+        } else {
+            if (db.saveNovel(username, novel)) {
+                Toast.makeText(getContext(), "Disimpan ke Library", Toast.LENGTH_SHORT).show();
+                isSaved = true;
+                updateSaveButton();
+            }
+        }
     }
 
     private void updateSaveButton() {
         isSaved = db.isNovelSaved(username, novel.getTitle());
         if (isSaved) {
-            btnSave.setText("REMOVE FROM LIBRARY");
-            btnSave.setBackgroundTintList(android.content.res.ColorStateList.valueOf(getResources().getColor(android.R.color.holo_red_dark)));
+            btnSave.setText("HAPUS DARI LIBRARY");
+            btnSave.setBackgroundTintList(
+                android.content.res.ColorStateList.valueOf(
+                    getResources().getColor(android.R.color.holo_red_dark)));
         } else {
-            btnSave.setText("SAVE TO LIBRARY");
-            btnSave.setBackgroundTintList(android.content.res.ColorStateList.valueOf(getResources().getColor(android.R.color.holo_blue_dark)));
+            btnSave.setText("SIMPAN KE LIBRARY");
+            btnSave.setBackgroundTintList(
+                android.content.res.ColorStateList.valueOf(
+                    getResources().getColor(android.R.color.holo_blue_dark)));
         }
     }
 }

@@ -25,25 +25,24 @@ public class LibraryFragment extends Fragment {
 
     private RecyclerView rvNovels;
     private NovelAdapter adapter;
-    private List<Novel> localNovelList;
     private TextInputEditText etSearch;
     private ProgressBar progressBar;
     private NovelViewModel viewModel;
 
+    private boolean isSearching = false;
+
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_library, container, false);
-        
-        rvNovels = view.findViewById(R.id.rvNovels);
-        etSearch = view.findViewById(R.id.etSearch);
-        progressBar = view.findViewById(R.id.progressBar);
 
-        // 1. Ambil data lokal dari NovelData
-        localNovelList = NovelData.getAllNovels();
-        
-        // 2. Setup Adapter dengan data lokal sebagai awalan
-        adapter = new NovelAdapter(new ArrayList<>(localNovelList), novel -> {
+        rvNovels     = view.findViewById(R.id.rvNovels);
+        etSearch     = view.findViewById(R.id.etSearch);
+        progressBar  = view.findViewById(R.id.progressBar);
+
+        // Adapter kosong — data akan diisi dari ViewModel
+        adapter = new NovelAdapter(new ArrayList<>(), novel -> {
             DetailFragment detailFragment = DetailFragment.newInstance(novel);
             getParentFragmentManager().beginTransaction()
                     .replace(R.id.fragment_container, detailFragment)
@@ -51,84 +50,75 @@ public class LibraryFragment extends Fragment {
                     .commit();
         });
 
-        rvNovels.setLayoutManager(new GridLayoutManager(getContext(), 3));
-        rvNovels.setHasFixedSize(true);
+        // Grid 3 kolom untuk tampilan lebih banyak novel
+        GridLayoutManager layoutManager = new GridLayoutManager(getContext(), 3);
+        rvNovels.setLayoutManager(layoutManager);
+        rvNovels.setHasFixedSize(false);
         rvNovels.setAdapter(adapter);
 
-        // 3. Inisialisasi ViewModel
+        // ViewModel
         viewModel = new ViewModelProvider(this).get(NovelViewModel.class);
 
-        // 4. Observasi data dari API
-        viewModel.getNovels().observe(getViewLifecycleOwner(), apiNovels -> {
-            if (apiNovels != null) {
-                // Gabungkan data lokal dan data API untuk hasil pencarian
-                List<Novel> combinedList = new ArrayList<>(localNovelList);
-                // Filter local list based on query if needed, 
-                // but usually API results are enough for a global search.
-                // For now, let's just combine them or show API results if searching.
-                
-                String query = etSearch.getText().toString().trim();
-                if (!query.isEmpty()) {
-                    List<Novel> filteredLocal = getFilteredLocal(query);
-                    List<Novel> results = new ArrayList<>(filteredLocal);
-                    results.addAll(apiNovels);
-                    adapter.setNovelList(results);
-                }
+        // Observasi daftar novel
+        viewModel.getNovels().observe(getViewLifecycleOwner(), novels -> {
+            if (novels != null) {
+                adapter.setNovelList(novels);
             }
         });
 
-        // Observasi status loading
-        viewModel.isLoading().observe(getViewLifecycleOwner(), isLoading -> {
+        // Observasi loading
+        viewModel.isLoading().observe(getViewLifecycleOwner(), loading -> {
             if (progressBar != null) {
-                progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+                progressBar.setVisibility(loading != null && loading ? View.VISIBLE : View.GONE);
             }
         });
 
         // Observasi error
         viewModel.getErrorMessage().observe(getViewLifecycleOwner(), error -> {
-            if (error != null && !error.isEmpty()) {
+            if (error != null && !error.isEmpty() && getContext() != null) {
                 Toast.makeText(getContext(), error, Toast.LENGTH_SHORT).show();
             }
         });
 
-        // 5. Listener Pencarian
-        etSearch.addTextChangedListener(new TextWatcher() {
+        // Infinite scroll — muat lebih banyak saat sampai bawah
+        rvNovels.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void onScrolled(@NonNull RecyclerView rv, int dx, int dy) {
+                if (isSearching) return;
+                if (dy <= 0) return;
+                if (!rv.canScrollVertically(1)) {
+                    // Sudah di paling bawah — muat halaman berikutnya
+                    viewModel.loadMoreNovels();
+                }
+            }
+        });
+
+        // Search listener
+        etSearch.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void afterTextChanged(Editable s) {}
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                String query = s.toString().trim();
-                if (query.isEmpty()) {
-                    // Jika kosong, tampilkan kembali data lokal saja
-                    adapter.setNovelList(localNovelList);
-                } else {
-                    // Filter lokal dulu agar responsif
-                    adapter.setNovelList(getFilteredLocal(query));
-                    
-                    // Jika lebih dari 2 karakter, cari di API untuk hasil lebih luas
-                    if (query.length() > 2) {
-                        viewModel.searchNovels(query);
-                    }
+                String q = s.toString().trim();
+                if (q.isEmpty()) {
+                    // Kembali ke mode browse
+                    isSearching = false;
+                    viewModel.loadBrowseNovels();
+                } else if (q.length() >= 3) {
+                    // Cari di semua sumber
+                    isSearching = true;
+                    viewModel.searchNovels(q);
                 }
             }
-
-            @Override
-            public void afterTextChanged(Editable s) {}
         });
 
-        return view;
-    }
-
-    private List<Novel> getFilteredLocal(String query) {
-        List<Novel> filteredList = new ArrayList<>();
-        String lowerQuery = query.toLowerCase();
-        for (Novel item : localNovelList) {
-            if (item.getTitle().toLowerCase().contains(lowerQuery) ||
-                item.getAuthor().toLowerCase().contains(lowerQuery)) {
-                filteredList.add(item);
-            }
+        // Muat novel dari Meionovel saat fragment pertama dibuka
+        if (viewModel.getNovels().getValue() == null
+                || viewModel.getNovels().getValue().isEmpty()) {
+            viewModel.loadBrowseNovels();
         }
-        return filteredList;
+
+        return view;
     }
 }

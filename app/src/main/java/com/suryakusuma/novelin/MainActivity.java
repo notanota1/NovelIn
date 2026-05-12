@@ -12,7 +12,6 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 public class MainActivity extends AppCompatActivity {
 
     private BottomNavigationView bottomNav;
-
     private SharedPreferences googlePrefs;
     private SharedPreferences manualPrefs;
 
@@ -24,58 +23,52 @@ public class MainActivity extends AppCompatActivity {
         googlePrefs = getSharedPreferences("google_session", MODE_PRIVATE);
         manualPrefs = getSharedPreferences("UserSession", MODE_PRIVATE);
 
+        // Inisialisasi cookie Cloudflare untuk SakuraNovel di background
+        NovelScraper.initSakuraCookies(this, null);
+
         bottomNav = findViewById(R.id.bottom_navigation);
         bottomNav.setOnItemSelectedListener(item -> {
-            Fragment selectedFragment = null;
+            Fragment selected = null;
             int id = item.getItemId();
 
             if (id == R.id.nav_home) {
-                selectedFragment = new HomeFragment();
+                selected = new HomeFragment();
             } else if (id == R.id.nav_search) {
-                selectedFragment = new LibraryFragment();
+                selected = new LibraryFragment();
             } else if (id == R.id.nav_account) {
-                // Kirim data user ke AccountFragment via Bundle
-                selectedFragment = new AccountFragment();
+                selected = new AccountFragment();
                 Bundle bundle = new Bundle();
-
-                String userName = googlePrefs.getString("name", manualPrefs.getString("username", "User"));
-                String userEmail = googlePrefs.getString("email", "");
-                String loginType = googlePrefs.getString("login_type", manualPrefs.getString("login_type", "manual"));
-
-                bundle.putString("user_name", userName);
-                bundle.putString("user_email", userEmail);
-                bundle.putString("login_type", loginType);
-                selectedFragment.setArguments(bundle);
+                bundle.putString("user_name",
+                    googlePrefs.getString("name", manualPrefs.getString("username", "User")));
+                bundle.putString("user_email", googlePrefs.getString("email", ""));
+                bundle.putString("login_type",
+                    googlePrefs.getString("login_type", manualPrefs.getString("login_type", "manual")));
+                selected.setArguments(bundle);
             }
 
-            if (selectedFragment != null) {
-
-                getSupportFragmentManager().popBackStack(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            if (selected != null) {
+                getSupportFragmentManager()
+                    .popBackStack(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE);
                 getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragment_container, selectedFragment)
-                        .commit();
+                    .replace(R.id.fragment_container, selected)
+                    .commit();
             }
             return true;
         });
 
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, new HomeFragment())
-                    .commit();
+                .replace(R.id.fragment_container, new HomeFragment())
+                .commit();
         }
 
-        getSupportFragmentManager().addOnBackStackChangedListener(() -> {
-            updateBottomNavVisibility();
-        });
+        getSupportFragmentManager().addOnBackStackChangedListener(this::updateBottomNavVisibility);
     }
 
     private void updateBottomNavVisibility() {
-        Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
-        if (currentFragment instanceof ReadingFragment || currentFragment instanceof DetailFragment) {
-            bottomNav.setVisibility(View.GONE);
-        } else {
-            bottomNav.setVisibility(View.VISIBLE);
-        }
+        Fragment current = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
+        boolean hide = current instanceof ReadingFragment || current instanceof DetailFragment;
+        bottomNav.setVisibility(hide ? View.GONE : View.VISIBLE);
     }
 
     @Override
@@ -86,10 +79,9 @@ public class MainActivity extends AppCompatActivity {
 
     public String getCurrentUserName() {
         String googleName = googlePrefs.getString("name", "");
-        if (!googleName.isEmpty()) {
-            return googleName;
-        }
-        return manualPrefs.getString("username", "User");
+        return googleName.isEmpty()
+            ? manualPrefs.getString("username", "User")
+            : googleName;
     }
 
     public void logout() {
