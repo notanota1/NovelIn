@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Novel implements Serializable {
-    private String id; // RanobeDB Series ID
+    private int id; // Diubah menjadi int agar sesuai dengan API RanobeDB
     private String title;
     private String author;
     private String description;
@@ -17,6 +17,12 @@ public class Novel implements Serializable {
     private List<String> tags;
     private List<Chapter> chapters;
 
+    // Tambahkan Constructor Kosong ini agar 'new Novel()' di Scraper tidak error
+    public Novel() {
+        this.chapters = new ArrayList<>();
+        this.tags = new ArrayList<>();
+    }
+
     public Novel(String title, String author, String description, String coverUrl, String novelUrl) {
         this.title = title;
         this.author = author != null ? author : "";
@@ -25,12 +31,9 @@ public class Novel implements Serializable {
         this.novelUrl = novelUrl != null ? novelUrl : "";
         this.chapters = new ArrayList<>();
         this.tags = new ArrayList<>();
-        this.source = "";
-        this.language = "";
-        this.coverResourceId = 0;
     }
 
-    // Constructor for local resource ID (Legacy support)
+    // Constructor baru untuk mendukung resource ID dan daftar chapter (digunakan di DatabaseHelper dan NovelData)
     public Novel(String title, String author, String description, int coverResourceId, List<Chapter> chapters) {
         this.title = title;
         this.author = author != null ? author : "";
@@ -38,15 +41,12 @@ public class Novel implements Serializable {
         this.coverResourceId = coverResourceId;
         this.chapters = chapters != null ? chapters : new ArrayList<>();
         this.tags = new ArrayList<>();
-        this.coverUrl = "";
-        this.novelUrl = "";
-        this.source = "";
-        this.language = "";
     }
 
     // Getters and Setters
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    // setId sekarang menerima int sesuai kebutuhan di NovelScraper
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }

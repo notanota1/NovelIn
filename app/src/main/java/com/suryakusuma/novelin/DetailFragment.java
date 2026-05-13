@@ -143,9 +143,22 @@ public class DetailFragment extends Fragment {
         scraper.getNovelDetail(novel, new NovelScraper.ScrapeListener<Novel>() {
             @Override
             public void onResult(Novel result) {
+
+                android.util.Log.d("DEBUG_NOVEL", "Author: " + result.getAuthor());
+                android.util.Log.d("DEBUG_NOVEL", "Desc: " + result.getDescription());
+
                 if (getActivity() == null) return;
                 getActivity().runOnUiThread(() -> {
+                    // --- POIN PENTING DISINI ---
+                    // Update objek novel di fragment dengan hasil 'result' yang sudah lengkap
+                    novel.setAuthor(result.getAuthor());
+                    novel.setDescription(result.getDescription());
+                    novel.setTags(result.getTags());
+                    novel.setNovelUrl(result.getNovelUrl());
+                    // ---------------------------
+
                     refreshDetailUI();
+
                     if (novel.getNovelUrl() != null && !novel.getNovelUrl().isEmpty()) {
                         loadChapters();
                     } else {

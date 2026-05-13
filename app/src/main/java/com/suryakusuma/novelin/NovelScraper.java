@@ -36,7 +36,6 @@ public class NovelScraper {
     private static final String BASE_WUXIA  = "https://wuxiaworld.site";
     private static final String BASE_RANOBEDB = "https://ranobedb.org/api/v0/";
 
-    // Base URL untuk gambar RanobeDB
     private static final String IMAGE_BASE_URL = "https://images.ranobedb.org/";
 
     private static final String UA =
@@ -134,13 +133,12 @@ public class NovelScraper {
 
     private Novel mapSeriesToNovel(RanobeModels.SeriesItem item) {
         String coverUrl = "";
-        // Coba ambil dari book.image
         if (item.book != null && item.book.image != null) {
             coverUrl = IMAGE_BASE_URL + item.book.image.filename;
         }
 
         Novel novel = new Novel(item.title, "", "", coverUrl, "");
-        novel.setId(String.valueOf(item.id));
+        novel.setId(item.id);
         novel.setSource(SOURCE_RANOBEDB);
         novel.setLanguage(item.olang);
         return novel;
@@ -149,22 +147,36 @@ public class NovelScraper {
     public void getNovelDetail(Novel novel, ScrapeListener<Novel> listener) {
         executor.execute(() -> {
             try {
-                if (SOURCE_RANOBEDB.equals(novel.getSource()) && novel.getId() != null) {
-                    Response<RanobeModels.SeriesDetail> response = apiService.getSeriesDetail(Integer.parseInt(novel.getId())).execute();
+                if (SOURCE_RANOBEDB.equals(novel.getSource()) && novel.getId() != 0) {
+                    Response<RanobeModels.SeriesDetail> response = apiService.getSeriesDetail(novel.getId()).execute();
                     if (response.isSuccessful() && response.body() != null) {
                         RanobeModels.SeriesDetail detail = response.body();
-                        novel.setDescription(detail.description);
+                        
+                        // Coba ambil sinopsis dari berbagai field RanobeDB
+                        String desc = detail.descriptionGeneric;
+                        if (desc == null || desc.isEmpty()) desc = detail.descriptionEn;
+                        if (desc == null || desc.isEmpty()) desc = detail.descriptionJa;
+                        
+                        if (desc != null && !desc.isEmpty()) {
+                            novel.setDescription(desc);
+                        }
 
-                        if (detail.books != null && !detail.books.isEmpty()) {
-                            for (RanobeModels.BookItem b : detail.books) {
-                                // Prioritaskan buku utama untuk dijadikan cover
-                                if (("main".equals(b.bookType) || detail.books.size() == 1) && b.image != null) {
-                                    novel.setCoverUrl(IMAGE_BASE_URL + b.image.filename);
+                        // Ambil Penulis dari staff list
+                        if (detail.staff != null) {
+                            for (RanobeModels.StaffItem s : detail.staff) {
+                                if ("author".equalsIgnoreCase(s.roleType) || "original_creator".equalsIgnoreCase(s.roleType)) {
+                                    novel.setAuthor(s.name);
                                     break;
                                 }
                             }
-                            if (novel.getCoverUrl().isEmpty() && detail.books.get(0).image != null) {
-                                novel.setCoverUrl(IMAGE_BASE_URL + detail.books.get(0).image.filename);
+                        }
+
+                        if (detail.books != null && !detail.books.isEmpty()) {
+                            for (RanobeModels.BookItem b : detail.books) {
+                                if (("main".equals(b.bType) || detail.books.size() == 1) && b.image != null) {
+                                    novel.setCoverUrl(IMAGE_BASE_URL + b.image.filename);
+                                    break;
+                                }
                             }
                         }
 
@@ -175,15 +187,23 @@ public class NovelScraper {
                         }
                     }
 
-                    // OTOMATIS CARI NOVEL URL (untuk Chapter) di MeioNovel jika masih kosong
-                    if (novel.getNovelUrl() == null || novel.getNovelUrl().isEmpty()) {
+                    // Fallback ke MeioNovel jika data penting masih kosong
+                    if (novel.getNovelUrl() == null || novel.getNovelUrl().isEmpty() || 
+                        novel.getDescription() == null || novel.getDescription().isEmpty() ||
+                        novel.getAuthor() == null || novel.getAuthor().isEmpty()) {
+                        
                         String query = novel.getTitle();
                         String searchUrl = BASE_MEIO + "/?s=" + URLEncoder.encode(query, StandardCharsets.UTF_8.name()) + "&post_type=wp-manga";
                         Document searchDoc = Jsoup.connect(searchUrl).userAgent(UA).timeout(10000).get();
-                        // Ambil hasil pencarian pertama
-                        Element firstResult = searchDoc.select(".c-tabs-item__content .post-title a, .post-title a").first();
+                        
+                        // Selector pencarian yang lebih agresif
+                        Element firstResult = searchDoc.select(".c-tabs-item__content .post-title a, .post-title a, .manga-title a").first();
+                        
                         if (firstResult != null) {
-                            novel.setNovelUrl(firstResult.attr("abs:href"));
+                            String mUrl = firstResult.attr("abs:href");
+                            novel.setNovelUrl(mUrl);
+                            Document detailDoc = Jsoup.connect(mUrl).userAgent(UA).timeout(10000).get();
+                            applyScrapedDetail(detailDoc, novel);
                         }
                     }
                 } else if (novel.getNovelUrl() != null && !novel.getNovelUrl().isEmpty()) {
@@ -199,10 +219,24 @@ public class NovelScraper {
     }
 
     private void applyScrapedDetail(Document doc, Novel novel) {
-        String author = doc.select(".author-content a, .mg_author .summary-content a").text().trim();
-        if (!author.isEmpty()) novel.setAuthor(author);
-        String desc = doc.select(".summary__content p, .description-summary .summary__content").text().trim();
-        if (!desc.isEmpty()) novel.setDescription(desc);
+        // Selector Penulis yang lebih luas untuk WP-Manga/Madara Theme
+        String author = doc.select(".author-content a, .mg_author .summary-content a, .post-content_item:contains(Author) .summary-content a").text().trim();
+        if (!author.isEmpty() && (novel.getAuthor() == null || novel.getAuthor().isEmpty())) {
+            novel.setAuthor(author);
+        }
+        
+        // Selector Sinopsis yang lebih luas
+        Elements descElements = doc.select(".summary__content p, .description-summary .summary__content p, .post-content_item .summary__content, .manga-excerpt, .summary__content");
+        StringBuilder sb = new StringBuilder();
+        for (Element p : descElements) {
+            String text = p.text().trim();
+            if (!text.isEmpty()) sb.append(text).append("\n\n");
+        }
+        
+        String finalDesc = sb.toString().trim();
+        if (!finalDesc.isEmpty() && (novel.getDescription() == null || novel.getDescription().isEmpty())) {
+            novel.setDescription(finalDesc);
+        }
     }
 
     public void getChapters(String novelUrl, String source, ScrapeListener<List<Novel.Chapter>> listener) {
@@ -272,18 +306,15 @@ public class NovelScraper {
     }
 
     private List<Novel> parseListing(Document doc, String source) {
-        Elements items = doc.select(".page-item-detail, .c-tabs-item__content");
+        Elements els = doc.select(".page-item-detail, .manga-item");
         List<Novel> list = new ArrayList<>();
-        for (Element el : items) {
-            Element titleEl = el.select(".post-title a").first();
-            if (titleEl == null) continue;
-            String title = titleEl.text().trim();
-            String url = titleEl.attr("abs:href");
-            Element imgEl = el.select("img").first();
-            String cover = imgEl != null ? imgEl.attr("abs:src") : "";
-            Novel novel = new Novel(title, "", "", cover, url);
-            novel.setSource(source);
-            list.add(novel);
+        for (Element el : els) {
+            String title = el.select(".post-title a, .manga-title a").text().trim();
+            String url = el.select(".post-title a, .manga-title a").attr("abs:href");
+            String cover = el.select("img").attr("abs:src");
+            Novel n = new Novel(title, "", "", cover, url);
+            n.setSource(source);
+            list.add(n);
         }
         return list;
     }
